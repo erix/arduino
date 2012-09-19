@@ -177,7 +177,7 @@ void toggle(OSCMessage *_mes) {
 void masterFader(OSCMessage *_mes) {
     float oscValue = _mes->getArgFloat(0);
     //  if(value!=1) return;
-    Serial.println("Master"); 
+    //Serial.println("Master"); 
     //  Serial.println(value);
 
     int value = (int) (oscValue * 255);
@@ -187,7 +187,7 @@ void masterFader(OSCMessage *_mes) {
 void redFader(OSCMessage *_mes) {
     float oscValue = _mes->getArgFloat(0);
     //  if(value!=1) return;
-    Serial.println("Red"); 
+    //Serial.println("Red"); 
     //Serial.println(value);
     
     int value = (int) (oscValue * 255);
@@ -197,7 +197,7 @@ void redFader(OSCMessage *_mes) {
 void greenFader(OSCMessage *_mes) {
     float oscValue = _mes->getArgFloat(0);
     //  if(value!=1) return;
-    Serial.println("Green"); 
+    //Serial.println("Green"); 
     //Serial.println(value);
 
     int value = (int) (oscValue * 255);
@@ -207,7 +207,7 @@ void greenFader(OSCMessage *_mes) {
 void blueFader(OSCMessage *_mes) {
     float oscValue = _mes->getArgFloat(0);
     //  if(value!=1) return;
-    Serial.println("Blue"); 
+    //Serial.println("Blue"); 
     //Serial.println(value);
 
     int value = (int) (oscValue * 255);
@@ -248,40 +248,56 @@ void refreshUI(OSCMessage *_mes) {
 
 
 void ledRFader(OSCMessage *_mes) {
-  Serial.println("LED_R");
+  if(Mirf.isSending()) return;
+  
+  //Serial.println("LED_R");
   float oscValue = _mes->getArgFloat(0);
   int value = (int) (oscValue * 255);
-  led.r = value;
+  if(led.r != value) {
+    led.r = value;
   
-  Mirf.setTADDR((byte *)"ledserv1");
-  Mirf.send((byte *)&led);
-  while(Mirf.isSending()){}
-  Serial.println("Finished sending");
+    Mirf.setTADDR((byte *)"ledserv1");
+    Mirf.send((byte *)&led);
+    //Serial.println("Sending");
+  }
+  //while(Mirf.isSending()){}
+  //Serial.println("Finished sending");
 }
 
 
 void ledGFader(OSCMessage *_mes) {
-  Serial.println("LED_G");
+  //Serial.println("LED_G");
+  if(Mirf.isSending()) return;
+  
+
   float oscValue = _mes->getArgFloat(0);
   int value = (int) (oscValue * 255);
-  led.g = value;
+  if(led.g != value) {
+    led.g = value;
   
-  Mirf.setTADDR((byte *)"ledserv1");
-  Mirf.send((byte *)&led);
-  while(Mirf.isSending()){}
-  Serial.println("Finished sending");
+    Mirf.setTADDR((byte *)"ledserv1");
+    Mirf.send((byte *)&led);
+    //Serial.println("Sending");
+  }
+  //while(Mirf.isSending()){}
+  //Serial.println("Finished sending");
 }
 
 void ledBFader(OSCMessage *_mes) {
-  Serial.println("LED_B");
+  if(Mirf.isSending()) return;
+  
+  //Serial.println("LED_B");
   float oscValue = _mes->getArgFloat(0);
   int value = (int) (oscValue * 255);
-  led.b = value;
+  if(led.b != value) {
+    led.b = value;
   
-  Mirf.setTADDR((byte *)"ledserv1");
-  Mirf.send((byte *)&led);
-  while(Mirf.isSending()){}
-  Serial.println("Finished sending");
+    Mirf.setTADDR((byte *)"ledserv1");
+    Mirf.send((byte *)&led);
+    //Serial.println("Sending");
+  }
+  //while(Mirf.isSending()){}
+  //Serial.println("Finished sending");
 }
 
 void setup(){ 
@@ -320,9 +336,5 @@ void setup(){
 }
 
 void loop(){
-
-    if(server.aviableCheck()>0){
-        Serial.println("alive! "); 
-    }
-
+  server.aviableCheck();
 }
