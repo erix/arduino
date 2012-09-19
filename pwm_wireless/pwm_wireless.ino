@@ -18,6 +18,8 @@
 #include <nRF24L01.h>
 #include <MirfHardwareSpiDriver.h>
 
+#include <EEPROM.h>
+
 int redPin   = 3;
 int greenPin = 6;
 int bluePin  = 5;
@@ -26,6 +28,35 @@ int bluePin  = 5;
 
 struct RGB { unsigned char r; unsigned char g; unsigned char b; };
 struct RGB led;
+
+int memoryAddress = 0;
+
+unsigned long time, elapsed;
+boolean newData = false;
+
+void readMemory(int a) {
+  led.r = EEPROM.read(a++);
+  led.g = EEPROM.read(a++);
+  led.b = EEPROM.read(a);
+  
+  // if all values are 0 then the memory was empty
+  if(led.r == 0 && led.g == 0 && led.b == 0) {
+    led.r = led.r = led.b = 255;
+  }
+
+}
+
+void writeMemory(int a) {
+   EEPROM.write(a++, led.r);
+   EEPROM.write(a++, led.g);
+   EEPROM.write(a, led.b);
+}
+  
+void show() {
+  analogWrite(redPin, led.r);
+  analogWrite(greenPin, led.g);
+  analogWrite(bluePin, led.b);
+}
 
 void setup(){
   
@@ -67,13 +98,15 @@ void setup(){
 
   pinMode(redPin,   OUTPUT);   // sets the pins as output
   pinMode(greenPin, OUTPUT);   
-  pinMode(bluePin,  OUTPUT); 
-  analogWrite(redPin, 255);
-  analogWrite(greenPin, 255);
-  analogWrite(bluePin, 255);
+  pinMode(bluePin,  OUTPUT);
+ 
+  readMemory(memoryAddress);
+  
+  show();
 }
 
-void loop(){
+void loop() {
+ 
   /*
    * If a packet has been recived.
    *
@@ -85,16 +118,23 @@ void loop(){
     /*
      * Get load the packet into the buffer.
      */
-     
-    Mirf.getData((byte *)&led);
-  //  analogWrite(redPin, 255);
-  //  delay(100);
-  //  analogWrite(redPin, 0);
-  //  delay(100);
     
+    // save the time when RGB was received
+    time = millis();
+    newData = true;
     
-    analogWrite(redPin, led.r);
-    analogWrite(greenPin, led.g);
-    analogWrite(bluePin, led.b);
+    Mirf.getData((byte *)&led); 
+    
+    show();
   }
+ 
+  // save the last RGB value if 5 minutes elapsed from last transmition  
+  if(newData) {
+    elapsed = millis() - time;
+    if (elapsed > 300000) {
+      writeMemory(memoryAddress);
+      newData = false;
+    }
+  }
+  
 }
