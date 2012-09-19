@@ -128,7 +128,7 @@ void loop() {
     show();
   }
  
-  // save the last RGB value if 5 minutes elapsed from last transmition  
+  // save the last RGB value if 5 minutes elapsed from last transmission  
   if(newData) {
     elapsed = millis() - time;
     if (elapsed > 300000) {
