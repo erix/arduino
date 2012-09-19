@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <ArdOSC.h>
+#include <EthernetBonjour.h>
 
-#include <SPI.h>
 #include <Mirf.h>
 #include <nRF24L01.h>
 #include <MirfHardwareSpiDriver.h>
@@ -316,9 +316,15 @@ void setup(){
     server.addCallback(REFRESH, &refreshUI);
     server.addCallback(LED_R, &ledRFader);
     server.addCallback(LED_G, &ledGFader);
-    server.addCallback(LED_B, &ledBFader);    
+    server.addCallback(LED_B, &ledBFader);
+   
+    // Setup Bonjour
+    EthernetBonjour.begin("arduino");
     
-        
+    EthernetBonjour.addServiceRecord("Arduino DMX Control._osc",
+                                     serverPort,
+                                     MDNSServiceUDP);
+      
     light.setMaster(0);
     light.setRed(0);
     light.setGreen(0);
@@ -335,6 +341,7 @@ void setup(){
     Serial.println(sizeof(RGB));
 }
 
-void loop(){
+void loop() {
+  EthernetBonjour.run();
   server.aviableCheck();
 }
