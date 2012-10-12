@@ -2,9 +2,6 @@
 #include <Ethernet.h>
 #include <EthernetClient.h>
 
-#define REPORT_PERIOD 1 //minutes
-
-
 // Oregon V2 decoder added - Dominique Pierre
 // Oregon V3 decoder revisited - Dominique Pierre
 // New code to decode OOK signals from weather sensors, etc.
@@ -228,13 +225,15 @@ OregonDecoderV3 orscV3;
 
 #define PORT 2
 
-const unsigned long report_period = 900000; // 15 minutes
+const unsigned long report_period = 1800000; // 30 minutes
 const unsigned long network_timeout = 30000; // 30 seconds
 
 volatile word pulse;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };
-char weather_server[] = "ancient-crag-5646.herokuapp.com";
+char weather_server[] = "mysmarthome.herokuapp.com";
+//char weather_server[] = "weather-logger.192.168.1.45.xip.io";
+
 
 EthernetClient client;
 unsigned long time_current, time_sent = 0, time_inside = 0, time_outside = 0;
@@ -286,7 +285,9 @@ boolean postToServer(String reading) {
   if (client.connect(weather_server,80)) {
     Serial.println("connected");
     client.println("GET /save?report="+reading+" HTTP/1.1");
-    client.println("Host: ancient-crag-5646.herokuapp.com");
+    client.print("Host: ");
+    client.println(weather_server);
+    client.println("Connection: close");
     client.println();
     timestamp = millis();
     
