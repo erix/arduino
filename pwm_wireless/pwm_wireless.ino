@@ -7,9 +7,8 @@
  * MOSI -> 11
  * SCK -> 13
  *
- * Configurable:
  * CE -> 8
- * CSN -> 7
+ * CSN -> 4
  *
  */
 
@@ -20,16 +19,22 @@
 
 #include <EEPROM.h>
 
-int redPin   = 3;
-int greenPin = 6;
-int bluePin  = 5;
+const int redPin   = 3;
+const int greenPin = 6;
+const int bluePin  = 5;
   
-
+const int memoryAddress = 0;
 
 struct RGB { unsigned char r; unsigned char g; unsigned char b; };
 struct RGB led;
 
-int memoryAddress = 0;
+struct payload_t
+{
+  byte command; // 0 - set; 1 - get
+  byte r; // reg channel
+  byte g; // green channel
+  byte b; // blue channel
+};
 
 unsigned long time, elapsed;
 boolean newData = false;
@@ -59,6 +64,7 @@ void show() {
 }
 
 void setup(){
+  //Serial.begin(9600);
   
   /*
    * Set the SPI Driver.
@@ -76,7 +82,8 @@ void setup(){
    * Configure reciving address.
    */
    
-  Mirf.setRADDR((byte *)"ledserv1");
+  Mirf.setRADDR((byte *)"clie1");
+  Mirf.setTADDR((byte *)"serv1");
   
   /*
    * Set the payload length to sizeof(unsigned long) the
@@ -85,7 +92,7 @@ void setup(){
    * NB: payload on client and server must be the same.
    */
    
-  Mirf.payload = sizeof(RGB);
+  Mirf.payload = sizeof(payload_t);
   
   /*
    * Write channel and payload config then power up reciver.
@@ -115,17 +122,26 @@ void loop() {
    */
    
   if(!Mirf.isSending() && Mirf.dataReady()){    
-    /*
-     * Get load the packet into the buffer.
-     */
+    payload_t payload;
     
     // save the time when RGB was received
     time = millis();
     newData = true;
     
-    Mirf.getData((byte *)&led); 
-    
-    show();
+    Mirf.getData((byte *)&payload); 
+    if( payload.command == 0 ) {
+      //Serial.println("Set command received");
+      led.r = payload.r;
+      led.g = payload.g;
+      led.b = payload.b;     
+      show();
+    } else if( payload.command == 1 ) {
+       //Serial.println("Get command received");
+       payload.r = led.r;
+       payload.g = led.g;
+       payload.b = led.b;        
+       Mirf.send((byte*)&payload);
+    }   
   }
  
   // save the last RGB value if 5 minutes elapsed from last transmission  

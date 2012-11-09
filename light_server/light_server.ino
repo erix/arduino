@@ -42,7 +42,7 @@ struct dmx_light_t
 
 struct led_light_t
 {
-  byte command; // 1 - set; 0 - get
+  byte command; // 0 - set; 1 - get
   byte r; // reg channel
   byte g; // green channel
   byte b; // blue channel
@@ -62,6 +62,12 @@ void setup() {
   
   Mirf.setRADDR((byte *)"serv1");
   Mirf.config();
+  
+  /* Radio channel setup parameters
+  byte rf;
+  Mirf.readRegister(RF_SETUP, &rf, 1);
+  Serial.println(rf, BIN);
+  */
   
   Ethernet.begin(myMac ,myIp); 
   oscServer.begin(serverPort);
@@ -92,7 +98,7 @@ void loop() {
   if (!EthernetBonjour.isDiscoveringService()) {
       EthernetBonjour.startDiscoveringService("_osc",
                                               MDNSServiceUDP,
-                                              5000);
+                                              10000);
   }
 }
 
@@ -112,7 +118,8 @@ void sendLEDValues() {
   if(Mirf.isSending()) return;
   Mirf.payload = sizeof(led_light_t);
   Mirf.config();
-  Mirf.setTADDR((byte *)"ledserv1");
+  led.command = 0;
+  Mirf.setTADDR((byte *)"clie1");
   Mirf.send((byte *)&led);
 }
 
@@ -138,6 +145,29 @@ void getDMXValues() {
   }
   Serial.println(F("Got response"));
   Mirf.getData((byte *) &dmxValues);
+}
+
+void getLEDValues() {
+  Serial.println("Getting LED data");
+  if(Mirf.isSending()) return;
+  Mirf.payload = sizeof(led_light_t);
+  Mirf.config();
+  led.command = 1;
+  Mirf.setTADDR((byte *)"clie1");
+  Mirf.send((byte *)&led);
+  
+  while( Mirf.isSending() ); // wait to finish the sending
+  
+  unsigned long time = millis();
+  while(!Mirf.dataReady()){ // wait for the response
+    //Serial.println("Waiting");
+    if ( ( millis() - time ) > 1000 ) {
+      Serial.println(F("Timeout on response from LED node!"));
+      return;
+    }
+  }
+  Serial.println(F("Got response"));
+  Mirf.getData((byte *) &led);  
 }
 
 void sendRefreshUI(uint8_t *ip) {
@@ -166,6 +196,24 @@ void sendRefreshUI(uint8_t *ip) {
     newMes.beginMessage(BLUE_FADER);
     newMes.addArgFloat(dmxValues.b/255.0); 
     oscClient.send(&newMes);
+    newMes.flush();
+    
+    newMes.setAddress(ip,destPort);
+    newMes.beginMessage(LED_R);
+    newMes.addArgFloat(led.r/255.0);
+    oscClient.send(&newMes);
+    newMes.flush();
+    
+    newMes.setAddress(ip,destPort);
+    newMes.beginMessage(LED_G);
+    newMes.addArgFloat(led.g/255.0);  
+    oscClient.send(&newMes);
+    newMes.flush();
+  
+    newMes.setAddress(ip,destPort);
+    newMes.beginMessage(LED_B);
+    newMes.addArgFloat(led.b/255.0); 
+    oscClient.send(&newMes);    
 }
 
 

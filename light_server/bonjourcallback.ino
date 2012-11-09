@@ -8,6 +8,7 @@ void serviceFound(const char* type, MDNSServiceProtocol proto,
 	Serial.println(type);
   } else {
     getDMXValues();
+    getLEDValues();
     sendRefreshUI((uint8_t *)ipAddr);
   }
 }
