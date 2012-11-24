@@ -61,7 +61,11 @@ void setup() {
   Mirf.init();
   
   Mirf.setRADDR((byte *)"serv1");
+  Mirf.channel = 90;
   Mirf.config();
+  
+  // Set 1MHz data rate - this increases the range slightly
+  Mirf.configRegister(RF_SETUP,0x06);
   
   /* Radio channel setup parameters
   byte rf;

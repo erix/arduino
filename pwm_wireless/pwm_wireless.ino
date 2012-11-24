@@ -94,11 +94,17 @@ void setup(){
    
   Mirf.payload = sizeof(payload_t);
   
+  Mirf.channel = 90;
+  
   /*
    * Write channel and payload config then power up reciver.
    */
    
   Mirf.config();
+
+  // Set 1MHz data rate - this increases the range slightly
+  Mirf.configRegister(RF_SETUP,0x06);
+
   
   
   // Output

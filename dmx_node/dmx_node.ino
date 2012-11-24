@@ -59,7 +59,11 @@ void setup() {
   Mirf.setTADDR((byte *)"serv1");
   
   Mirf.payload = sizeof(payload_t);
+  Mirf.channel = 90;
   Mirf.config();
+  // Set 1MHz data rate - this increases the range slightly
+  Mirf.configRegister(RF_SETUP,0x06);
+
  
   
   light.setChannels(0,0,0,0);
