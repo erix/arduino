@@ -64,7 +64,6 @@ void setup () {
 
     rf12_set_cs(8);  // pin 8
     rf12_initialize(myNodeID,freq,network);   //Initialize RFM12 with settings defined above  
-    Serial.println("RF12B demo Receiver - Simple demo"); 
     
     Serial.print("Node: "); 
     Serial.print(myNodeID); 
@@ -79,7 +78,7 @@ void setup () {
     Serial.print(F("report period: "));
     Serial.println(reportPeriod);
     
-    Ethernet.begin(mac, myIp);
+    Ethernet.begin(mac);
     
     // 433Mhz receiver setup
    
@@ -180,12 +179,15 @@ void loop () {
        if( (millis() - lastPulseSent) >= pulseCollectInterval ) {
          data += "\nWh," + String(powerPulses);
          if( sendDataToCosm(data) ) {
+           sendDataToHeroku(data);
            // we sent it successfully, reset the data
            powerPulses = 0;
            lastPulseSent = millis();
          }
        } else {
-         sendDataToCosm(data);    
+         Serial.println("Post to Cosm");
+         sendDataToCosm(data);
+         sendDataToHeroku(data);   
        }
      }
     }
@@ -227,5 +229,11 @@ String decodeHum(class DecodeOOK& decoder) {
   const byte* data = decoder.getData(pos);
   hum += ((data[7] & 0x0F)*10)+ (data[4] >> 4);
   return hum;
+}
+
+int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
