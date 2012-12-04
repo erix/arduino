@@ -22,6 +22,8 @@ const unsigned long pulseCollectInterval = 3600000; // 1 hour
 unsigned long lastPulseSent = 0;
 unsigned int powerPulses = 0;   // here we collect the pulses
 
+String inside_temp, outside_temp, inside_hum, outside_hum;
+
 volatile word pulse;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };
@@ -125,12 +127,12 @@ void loop () {
               temp = decodeTemp(orscV2);
               hum = decodeHum(orscV2);
 
-              if( model == "3" ) {                
-                Serial.println(F("Sending to Cosm"));
-                sendDataToCosm("temp,"+temp+"\nhum,"+hum);
+              if( model == "3" ) {
+                outside_temp = temp;
+                outside_hum = hum;
               } else if( model == "2" ) {
-                Serial.println(F("Sending to Cosm"));
-                sendDataToCosm("temp2,"+temp+"\nhum2,"+hum);
+                inside_temp = temp;
+                inside_hum = hum;     
               }                
             }
                
@@ -163,9 +165,17 @@ void loop () {
        Serial.print(F("misc1: ")); Serial.println(emontx.misc1); 
        Serial.print(F("misc2: ")); Serial.println(emontx.misc2); 
        Serial.println(); 
-       
-       String data = "power," + String(emontx.power);              
+              
+       // count the pulses
        powerPulses += emontx.pulse;
+       
+       // prepare data string
+       String data = "power," + String(emontx.power);
+       if(outside_temp != "") data += "\ntemp," + outside_temp;
+       if(outside_hum != "") data += "\nhum," + outside_hum;
+       if(inside_temp != "") data += "\ntemp2," + inside_temp;
+       if(inside_hum != "") data += "\nhum2," + inside_hum;
+
        // check whether to report the pulses
        if( (millis() - lastPulseSent) >= pulseCollectInterval ) {
          data += "\nWh," + String(powerPulses);
