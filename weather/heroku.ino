@@ -1,10 +1,9 @@
-//char weather_server[] = "mysmarthome.herokuapp.com";
-char weather_server[] = "weather-logger.192.168.1.45.xip.io";
+char weather_server[] = "mysmarthome.herokuapp.com";
+//char weather_server[] = "weather-logger.192.168.1.45.xip.io";
 
 
 bool postToServer(String reading) {
   unsigned long timestamp;
-  
   if (client.connect(weather_server,80)) {
     Serial.println(F("connected"));
     client.println("GET /save?report="+reading+" HTTP/1.1");

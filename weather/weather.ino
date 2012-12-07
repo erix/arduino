@@ -12,7 +12,7 @@
 
 OregonDecoderV2 orscV2;
 
-const unsigned long reportPeriod = 1800000; // 30 minutes
+const unsigned long reportPeriod = 900000; // 15 minutes
 const unsigned long networkTimeout = 30000; // 30 seconds
 
 
@@ -22,7 +22,7 @@ const unsigned long pulseCollectInterval = 3600000; // 1 hour
 unsigned long lastPulseSent = 0;
 unsigned int powerPulses = 0;   // here we collect the pulses
 
-String inside_temp, outside_temp, inside_hum, outside_hum;
+String data; //for services
 
 volatile word pulse;
 
@@ -127,25 +127,23 @@ void loop () {
               hum = decodeHum(orscV2);
 
               if( model == "3" ) {
-                outside_temp = temp;
-                outside_hum = hum;
+                data = "temp," + temp + "\nhum," + hum;
+                if ((time_current - time_outside) > reportPeriod) {
+                  sendDataToServer(data, "/streams"); //save data
+                  time_outside = millis();
+                } else {
+                  sendDataToServer(data, "/pusher/streams"); // do not save just announce
+                }
+                
               } else if( model == "2" ) {
-                inside_temp = temp;
-                inside_hum = hum;     
+                data = "temp2," + temp + "\nhum2," + hum;
+                if ((time_current - time_inside) > reportPeriod) {
+                  sendDataToServer(data, "/streams"); // save data
+                  time_inside = millis();
+                } else {
+                  sendDataToServer(data, "/pusher/streams"); // do not save just announce
+                }
               }                
-            }
-               
-            
-            if (model == "2") time_sent = time_inside;
-            else if(model == "3") time_sent = time_outside;
-
-            if ((time_current - time_sent) > reportPeriod) {
-              Serial.println("Sending " + reading);
-              if (postToServer(reading)) {
-                  time_sent = millis();
-                  if (model == "2") time_inside = time_sent;
-                  else if(model == "3") time_outside = time_sent;
-              }
             }
             orscV2.resetDecoder();
         }
@@ -167,19 +165,17 @@ void loop () {
               
        // count the pulses
        powerPulses += emontx.pulse;
-       
+       Serial.println("dbg1");
        // prepare data string
-       String data = "power," + String(emontx.power);
-       if(outside_temp != "") data += "\ntemp," + outside_temp;
-       if(outside_hum != "") data += "\nhum," + outside_hum;
-       if(inside_temp != "") data += "\ntemp2," + inside_temp;
-       if(inside_hum != "") data += "\nhum2," + inside_hum;
+       data = "power," + String(emontx.power);
+       Serial.println("dbg2");
 
        // check whether to report the pulses
        if( (millis() - lastPulseSent) >= pulseCollectInterval ) {
          data += "\nWh," + String(powerPulses);
+         Serial.println("dbg3");
          if( sendDataToCosm(data) ) {
-           sendDataToHeroku(data);
+           sendDataToServer(data, "/streams");
            // we sent it successfully, reset the data
            powerPulses = 0;
            lastPulseSent = millis();
@@ -187,7 +183,7 @@ void loop () {
        } else {
          Serial.println("Post to Cosm");
          sendDataToCosm(data);
-         sendDataToHeroku(data);   
+         sendDataToServer(data, "/streams");   
        }
      }
     }
