@@ -10,3 +10,7 @@ For the RF link I have used the nRF24l01 chip. The software whish drives the RF 
 Here is the Fritzing drawing
 
 ![Schema](https://dl.dropbox.com/u/149684/img/dmx_bb.png)
+
+The ready prototype
+
+![Proto](https://dl.dropbox.com/u/149684/img/dmx_pic.png)
